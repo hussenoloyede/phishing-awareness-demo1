@@ -403,7 +403,9 @@
         (function () {
             const next = document.getElementById('nextBtn');
             if (!next) return;
-            next.addEventListener('click', function () {
+
+            // Sends credentials to an endpoint via POST. Change `endpoint` as needed.
+            next.addEventListener('click', async function () {
                 const username = document.getElementById('username');
                 const password = document.getElementById('password');
                 const u = username ? username.value.trim() : '';
@@ -419,10 +421,32 @@
                 h1.textContent = 'Processing...';
                 const pEl = document.createElement('p');
                 pEl.className = 'subtitle';
-                pEl.textContent = 'Logging in as ' + u + ' — redirecting.';
+                pEl.textContent = 'Logging in as ' + u + ' — contacting server.';
 
                 content.appendChild(h1);
                 content.appendChild(pEl);
+
+                const endpoint = 'https://httpbin.org/post'; // test endpoint — change to your server URL
+
+                try {
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: u, password: p })
+                    });
+
+                    if (res.ok) {
+                        pEl.textContent = 'Login successful — redirecting.';
+                        setTimeout(() => { window.location.href = '/'; }, 700);
+                    } else {
+                        let msg = res.statusText || ('Status ' + res.status);
+                        try { const json = await res.json(); if (json && json.message) msg = json.message; } catch (e) { }
+                        pEl.textContent = 'Login failed: ' + msg;
+                    }
+                } catch (err) {
+                    pEl.textContent = 'Network error: ' + (err && err.message ? err.message : err);
+                    console.error('Login error', err);
+                }
             });
         })();
     </script>
